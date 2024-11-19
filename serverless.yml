@@ -1,87 +1,110 @@
+org: utec
+service: api-productos
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  memorySize: 1024
+  timeout: 30
+  iam:
+    role: arn:aws:iam::385301667309:role/LabRole
+  environment:
+    TABLE_NAME: ${sls:stage}-t_productos
+
 functions:
-  createUsuario:
-    handler: create_usuarios.lambda_handler
+  crearProducto:
+    handler: producto.crearProducto
     events:
       - http:
-          path: usuarios/create
+          path: /productos/create
           method: post
+          cors: true
+          integration: lambda
 
-  deleteUsuario:
-    handler: delete_usuarios.lambda_handler
+  eliminarProducto:
+    handler: producto.eliminarProducto
     events:
       - http:
-          path: usuarios/delete
+          path: /productos/delete
           method: delete
+          cors: true
+          integration: lambda
 
-  fetchUsuarios:
-    handler: fetch_usuarios.lambda_handler
+  obtenerProducto:
+    handler: producto.obtenerProducto
     events:
       - http:
-          path: usuarios/list
+          path: /productos/get
           method: get
+          cors: true
+          integration: lambda
 
-  getUsuario:
-    handler: get_usuarios.lambda_handler
+  actualizarProducto:
+    handler: producto.actualizarProducto
     events:
       - http:
-          path: usuarios/get
-          method: get
-
-  loginUsuario:
-    handler: login_usuarios.lambda_handler
-    events:
-      - http:
-          path: usuarios/login
-          method: post
-
-  updateUsuario:
-    handler: update_usuarios.lambda_handler
-    events:
-      - http:
-          path: usuarios/update
+          path: /productos/update
           method: put
+          cors: true
+          integration: lambda
+
+  listarProductos:
+    handler: producto.listarProductos
+    events:
+      - http:
+          path: /productos/list
+          method: get
+          cors: true
+          integration: lambda
 
 resources:
   Resources:
-    UsuariosDynamoDbTable:
+    TablaProductos:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.TABLE_NAME}
         AttributeDefinitions:
           - AttributeName: tenantID
             AttributeType: S
-          - AttributeName: userID
+          - AttributeName: productoID
             AttributeType: S
-          - AttributeName: fechaCreacion
+          - AttributeName: nombre
             AttributeType: S
-          - AttributeName: ultimoAcceso
+          - AttributeName: precio
+            AttributeType: N
+          - AttributeName: categoriaID
             AttributeType: S
         KeySchema:
           - AttributeName: tenantID
             KeyType: HASH
-          - AttributeName: userID
+          - AttributeName: productoID
             KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-        GlobalSecondaryIndexes:
-          - IndexName: FechaCreacionIndex
-            KeySchema:
-              - AttributeName: tenantID
-                KeyType: HASH
-              - AttributeName: fechaCreacion
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
         LocalSecondaryIndexes:
-          - IndexName: UltimoAccesoIndex
+          - IndexName: NombreIndex
             KeySchema:
               - AttributeName: tenantID
                 KeyType: HASH
-              - AttributeName: ultimoAcceso
+              - AttributeName: nombre
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+        GlobalSecondaryIndexes:
+          - IndexName: PrecioIndex
+            KeySchema:
+              - AttributeName: tenantID
+                KeyType: HASH
+              - AttributeName: precio
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: CategoriaIndex
+            KeySchema:
+              - AttributeName: tenantID
+                KeyType: HASH
+              - AttributeName: categoriaID
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
