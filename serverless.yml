@@ -1,0 +1,87 @@
+functions:
+  createUsuario:
+    handler: create_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/create
+          method: post
+
+  deleteUsuario:
+    handler: delete_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/delete
+          method: delete
+
+  fetchUsuarios:
+    handler: fetch_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/list
+          method: get
+
+  getUsuario:
+    handler: get_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/get
+          method: get
+
+  loginUsuario:
+    handler: login_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/login
+          method: post
+
+  updateUsuario:
+    handler: update_usuarios.lambda_handler
+    events:
+      - http:
+          path: usuarios/update
+          method: put
+
+resources:
+  Resources:
+    UsuariosDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: tenantID
+            AttributeType: S
+          - AttributeName: userID
+            AttributeType: S
+          - AttributeName: fechaCreacion
+            AttributeType: S
+          - AttributeName: ultimoAcceso
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenantID
+            KeyType: HASH
+          - AttributeName: userID
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        GlobalSecondaryIndexes:
+          - IndexName: FechaCreacionIndex
+            KeySchema:
+              - AttributeName: tenantID
+                KeyType: HASH
+              - AttributeName: fechaCreacion
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        LocalSecondaryIndexes:
+          - IndexName: UltimoAccesoIndex
+            KeySchema:
+              - AttributeName: tenantID
+                KeyType: HASH
+              - AttributeName: ultimoAcceso
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
